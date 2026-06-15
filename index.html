@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Acceso a Laboratorios</title>
-    <!-- Librerías de Inteligencia Artificial -->
-    <script src="https://jsdelivr.net"></script>
-    <script src="https://jsdelivr.net"></script>
+    <!-- Servidores alternativos UNPKG libres de bloqueos regionales -->
+    <script src="https://unpkg.com"></script>
+    <script src="https://unpkg.com"></script>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -73,12 +73,10 @@
     </div>
 
     <script type="text/javascript">
-        // ENLACE CORREGIDO Y CONFIGURADO
-        const URL_PROYECTO = "https://teachablemachine.withgoogle.com/models/fJfSXN1rY/";
+        const URL_PROYECTO = "https://withgoogle.com";
 
         let model, webcam, statusBox, maxPredictions;
 
-        // Formatear la URL para asegurar que termine en barra /
         const URL_MODELO = URL_PROYECTO.endsWith("/") ? URL_PROYECTO : URL_PROYECTO + "/";
 
         async function init() {
@@ -100,7 +98,6 @@
                 await webcam.play();
                 window.requestAnimationFrame(loop);
 
-                // Limpiar contenedor antes de agregar la cámara nueva
                 document.getElementById("webcam-container").innerHTML = "";
                 document.getElementById("webcam-container").appendChild(webcam.canvas);
                 
@@ -134,7 +131,6 @@
                 }
             }
 
-            // Umbral de confianza mínimo (85% de seguridad)
             if (maxProb > 0.85) {
                 evaluarAcceso(mejorClase);
             } else {
@@ -145,22 +141,21 @@
             }
         }
 
-        // Lógica de validación según tus clases de Teachable Machine
         function evaluarAcceso(claseDetectada) {
             if (claseDetectada === "Bata Azul") {
-                document.body.style.backgroundColor = "#e3f2fd"; // Fondo azul
+                document.body.style.backgroundColor = "#e3f2fd"; 
                 statusBox.innerHTML = "🟢 ACCESO PERMITIDO<br><span style='font-size:16px;'>Mantenimiento / Informática</span>";
                 statusBox.style.backgroundColor = "#d1ecf1";
                 statusBox.style.color = "#0c5460";
             } 
             else if (claseDetectada === "Bata Blanca") {
-                document.body.style.backgroundColor = "#e8f5e9"; // Fondo verde
+                document.body.style.backgroundColor = "#e8f5e9"; 
                 statusBox.innerHTML = "🟢 ACCESO PERMITIDO<br><span style='font-size:16px;'>Laboratorio de Química</span>";
                 statusBox.style.backgroundColor = "#d4edda";
                 statusBox.style.color = "#155724";
             } 
             else if (claseDetectada === "Inco") {
-                document.body.style.backgroundColor = "#ffebee"; // Fondo rojo
+                document.body.style.backgroundColor = "#ffebee"; 
                 statusBox.innerHTML = "🔴 ACCESO DENEGADO<br><span style='font-size:16px;'>Falta bata reglamentaria</span>";
                 statusBox.style.backgroundColor = "#f8d7da";
                 statusBox.style.color = "#721c24";
