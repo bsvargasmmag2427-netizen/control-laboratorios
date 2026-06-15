@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Acceso a Laboratorios</title>
+    <!-- Librerías de Inteligencia Artificial -->
+    <script src="https://jsdelivr.net"></script>
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            background-color: #f0f2f5; 
+            margin: 0; 
+            padding: 20px;
+            transition: background-color 0.5s ease;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 { color: #1a1a1a; margin-bottom: 5px; }
+        p { color: #666; margin-top: 0; }
+        #webcam-container { 
+            margin: 20px auto; 
+            width: 320px; 
+            height: 320px; 
+            border-radius: 50%; 
+            overflow: hidden; 
+            border: 6px solid #ccc;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        #webcam-container canvas { width: 100%; height: 100%; object-fit: cover; }
+        #status-box {
+            margin-top: 25px;
+            padding: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 10px;
+            background-color: #eee;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+        .btn { 
+            padding: 12px 25px; 
+            font-size: 16px; 
+            font-weight: bold;
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            box-shadow: 0 4px 6px rgba(0,123,255,0.2);
+        }
+        .btn:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Acceso Automatizado</h1>
+        <p>Escaneo de Equipo de Protección Personal (EPP)</p>
+        
+        <button class="btn" type="button" onclick="init()">Encender Escáner</button>
+        
+        <div id="webcam-container"></div>
+        <div id="status-box">Sistema Apagado</div>
+    </div>
+
+    <script type="text/javascript">
+        // PEGA AQUÍ TU ENLACE ENTRE LAS COMILLAS (Ejemplo: "https://withgoogle.com")
+        const URL_PROYECTO = "https://teachablemachine.withgoogle.com/models/fJfSXN1rY/";
+
+        let model, webcam, statusBox, maxPredictions;
+
+        // Formatear la URL para asegurar que termine en barra /
+        const URL_MODELO = URL_PROYECTO.endsWith("/") ? URL_PROYECTO : URL_PROYECTO + "/";
+
+        async function init() {
+            statusBox = document.getElementById("status-box");
+            statusBox.innerHTML = "Cargando Inteligencia Artificial...";
+            statusBox.style.backgroundColor = "#fff3cd";
+            statusBox.style.color = "#856404";
+
+            try {
+                const modelURL = URL_MODELO + "model.json";
+                const metadataURL = URL_MODELO + "metadata.json";
+
+                model = await tmImage.load(modelURL, metadataURL);
+                maxPredictions = model.getTotalClasses();
+
+                const flip = true; 
+                webcam = new tmImage.Webcam(320, 320, flip); 
+                await webcam.setup(); 
+                await webcam.play();
+                window.requestAnimationFrame(loop);
+
+                // Limpiar contenedor antes de agregar la cámara nueva
+                document.getElementById("webcam-container").innerHTML = "";
+                document.getElementById("webcam-container").appendChild(webcam.canvas);
+                
+                statusBox.innerHTML = "¡Listo! Colócate frente a la cámara";
+                statusBox.style.backgroundColor = "#e2e3e5";
+                statusBox.style.color = "#383d41";
+            } catch (error) {
+                statusBox.innerHTML = "Error al cargar el modelo o la cámara.";
+                statusBox.style.backgroundColor = "#f8d7da";
+                statusBox.style.color = "#721c24";
+                console.error(error);
+            }
+        }
+
+        async function loop() {
+            webcam.update(); 
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            
+            let mejorClase = "";
+            let maxProb = 0;
+
+            for (let i = 0; i < maxPredictions; i++) {
+                if (prediction[i].probability > maxProb) {
+                    maxProb = prediction[i].probability;
+                    mejorClase = prediction[i].className;
+                }
+            }
+
+            // Umbral de confianza mínimo (85% de seguridad)
+            if (maxProb > 0.85) {
+                evaluarAcceso(mejorClase);
+            } else {
+                document.body.style.backgroundColor = "#f0f2f5";
+                statusBox.innerHTML = "Analizando vestimenta...";
+                statusBox.style.backgroundColor = "#eee";
+                statusBox.style.color = "#333";
+            }
+        }
+
+        // Lógica de validación según tus clases de Teachable Machine
+        function evaluarAcceso(claseDetectada) {
+            if (claseDetectada === "Bata Azul") {
+                document.body.style.backgroundColor = "#e3f2fd"; // Fondo azul
+                statusBox.innerHTML = "🟢 ACCESO PERMITIDO<br><span style='font-size:16px;'>Mantenimiento / Informática</span>";
+                statusBox.style.backgroundColor = "#d1ecf1";
+                statusBox.style.color = "#0c5460";
+            } 
+            else if (claseDetectada === "Bata Blanca") {
+                document.body.style.backgroundColor = "#e8f5e9"; // Fondo verde
+                statusBox.innerHTML = "🟢 ACCESO PERMITIDO<br><span style='font-size:16px;'>Laboratorio de Química</span>";
+                statusBox.style.backgroundColor = "#d4edda";
+                statusBox.style.color = "#155724";
+            } 
+            else if (claseDetectada === "Inco") {
+                document.body.style.backgroundColor = "#ffebee"; // Fondo rojo
+                statusBox.innerHTML = "🔴 ACCESO DENEGADO<br><span style='font-size:16px;'>Falta bata reglamentaria</span>";
+                statusBox.style.backgroundColor = "#f8d7da";
+                statusBox.style.color = "#721c24";
+            }
+        }
+    </script>
+</body>
+</html>
